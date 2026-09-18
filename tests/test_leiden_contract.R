@@ -130,8 +130,10 @@ test_representation_manifest_scope_and_dependency_contract <- function() {
   manifest <- jsonlite::read_json(path, simplifyVector = FALSE)
   stopifnot(identical(manifest$namespace, "scwbrepresentation"),
     identical(manifest$pack_abi_version, "3"),
-    identical(vapply(manifest$operations, `[[`, "", "name"), "leiden"),
-    identical(vapply(manifest$operations[[1L]]$dependencies, `[[`, "",
+    setequal(vapply(manifest$operations, `[[`, "", "name"),
+      c("leiden", "pca_fit")),
+    identical(vapply(manifest$operations[[which(vapply(manifest$operations,
+      `[[`, "", "name") == "leiden")]]$dependencies, `[[`, "",
       "name"), c("scworkbench", "igraph", "RANN")))
   TRUE
 }

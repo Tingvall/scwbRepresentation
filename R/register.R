@@ -9,5 +9,6 @@ register_operation_pack <- function() {
   scworkbench::wb_operation_pack_register(
     system.file("scworkbench", "operation-pack.json",
       package = "scwbRepresentation"),
-    list(`scwbrepresentation::leiden` = .run_leiden))
+    list(`scwbrepresentation::leiden` = .run_leiden,
+      `scwbrepresentation::pca_fit` = .run_pca_fit))
 }

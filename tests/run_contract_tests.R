@@ -1,6 +1,7 @@
 args <- commandArgs(trailingOnly = FALSE)
 file_arg <- sub("^--file=", "", args[grepl("^--file=", args)])
-root <- normalizePath(file.path(dirname(file_arg), ".."), mustWork = TRUE)
+root <- if (length(file_arg)) normalizePath(file.path(dirname(file_arg),
+  ".."), mustWork = TRUE) else normalizePath(".", mustWork = TRUE)
 source(file.path(root, "tests", "helper_representation_fixture.R"),
   local = .GlobalEnv)
 files <- sort(list.files(file.path(root, "tests"), pattern = "^test_.*\\.R$",

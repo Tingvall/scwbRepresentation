@@ -27,6 +27,123 @@ retained <- lapply(names(params), function(name) {
   if (identical(name, "dims")) out$required <- FALSE
   out
 })
+matrix_input <- list(name = "matrix", kind = "matrix", required = TRUE,
+  alignment = "cell_and_feature_ordered")
+pca_params <- list(
+  feature_ids = list(type = c("array", "null"), default = NULL,
+    uniqueItems = TRUE, items = list(type = "string", minLength = 1L)),
+  n_components = parameter("integer", 50L, 2L, 10000L, FALSE),
+  center = list(type = "boolean", default = TRUE),
+  scale = list(type = "boolean", default = TRUE),
+  backend = list(type = "string", default = "irlba",
+    enum = list("irlba", "prcomp")),
+  seed = parameter("integer", 1L, nullable = FALSE),
+  space_id_out = list(type = "string", default = "rna.pca", minLength = 1L),
+  overwrite = list(type = "boolean", default = FALSE),
+  max_dense_gb = parameter("number", 8, .1, nullable = FALSE),
+  chunk_size = parameter("integer", 256L, 1L, 100000L, FALSE))
+pca_outputs <- c("space", "loadings", "variance", "fit_summary")
+pca_closure <- stats::setNames(lapply(c("loadings", "variance",
+  "fit_summary"), function(x)
+  unname(as.list(sort(pca_outputs, method = "radix")))),
+  c("loadings", "variance", "fit_summary"))
+pca_replay <- stats::setNames(as.list(rep("exact_canonical_value",
+  length(pca_outputs))), pca_outputs)
+pca <- list(name = "pca_fit", qualified_name = "scwbrepresentation::pca_fit",
+  title = "PCA Fit",
+  description = "Fit PCA from authenticated matrix slices and publish a parameter-bound dense space.",
+  runner = ".run_pca_fit", inputs = list(matrix_input,
+    list(name = "features", kind = "feature_table", required = FALSE,
+      alignment = "feature_ordered")),
+  params_schema = list(type = "object", properties = pca_params,
+    additionalProperties = FALSE),
+  parameter_bindings = list(list(parameter = "feature_ids",
+    policy = "feature_ids_from_table_or_matrix_v1", input = "matrix",
+    table_input = "features", field = "feature_id",
+    selected_field = "selected")),
+  typed_slice_reads = list(list(name = "matrix_chunks", input = "matrix",
+    reader = "read_typed_slices", kind = "matrix",
+    supported_axes = list("features"), chunk_axis = "features",
+    chunk_size_parameter = "chunk_size",
+    call_discipline = "ordered_partition_exactly_once",
+    empty_selection_policy = "reject", duplicate_policy = "reject",
+    selection = list(cells = list(policy = "effective_input_axis_v1"),
+      features = list(policy = "parameter_ordered_subset_v1",
+        parameter = "feature_ids", unknown = "error", duplicates = "reject",
+        order = "parameter_order")))),
+  parameter_axes = list(list(name = "principal_components",
+    policy = "integer_parameter_axis_v1", parameter = "n_components",
+    minimum = 2L, maximum = list(
+      source = "typed_slice_rank_upper_bound_v1",
+      typed_slice_read = "matrix_chunks", cell_offset = -1L,
+      feature_offset = -1L), labels = list(
+        policy = "prefix_one_based_v1", prefix = "PC"))),
+  publication_policies = list(list(output = "space",
+    policy = "authenticated_add_or_replace_v1", target_kind = "space",
+    target_id_parameter = "space_id_out", overwrite_parameter = "overwrite",
+    transaction_scope = "promotion_group_v1")),
+  dimension_policies = list(
+    list(output = "space", policy = "cell_by_parameter_axis_v1",
+      cell_axis = list(source = "typed_slice_read_v1",
+        typed_slice_read = "matrix_chunks"),
+      dimension_axis = "principal_components",
+      row_order = "typed_slice_cell_order_v1",
+      column_order = "parameter_axis_order_v1"),
+    list(output = "loadings",
+      policy = "feature_parameter_axis_cartesian_v1",
+      feature_axis = list(source = "typed_slice_read_v1",
+        typed_slice_read = "matrix_chunks"),
+      parameter_axis = "principal_components",
+      row_order = "parameter_axis_then_feature_v1",
+      feature_field = "feature_id", axis_label_field = "PC",
+      axis_index_field = "component"),
+    list(output = "variance", policy = "one_per_parameter_axis_v1",
+      parameter_axis = "principal_components",
+      row_order = "parameter_axis_order_v1", axis_label_field = "PC",
+      axis_index_field = "component"),
+    list(output = "fit_summary", policy = "singleton_parameter_echo_v1",
+      parameter_axis = "principal_components",
+      count_field = "n_components")),
+  outputs = list(
+    list(name = "space", category = "materialization", kind = "space",
+      storage_profile = "space_file_backed_hdf5_v1",
+      allocated_id_key = "space_id", required = TRUE,
+      promotion_group = "pca",
+      materialized_by_terminals = list("fit_summary", "loadings", "variance")),
+    list(name = "loadings", category = "terminal_artifact",
+      kind = "feature_table", storage_profile = "terminal_primitive_v1",
+      allocated_id_key = "loadings_id", required = TRUE,
+      promotion_group = "pca", table_type = "pca_loadings"),
+    list(name = "variance", category = "terminal_artifact",
+      kind = "obs_table", storage_profile = "terminal_primitive_v1",
+      allocated_id_key = "variance_id", required = TRUE,
+      promotion_group = "pca", table_type = "pca_variance_explained"),
+    list(name = "fit_summary", category = "terminal_artifact",
+      kind = "obs_table", storage_profile = "terminal_primitive_v1",
+      allocated_id_key = "fit_summary_id", required = TRUE,
+      promotion_group = "pca", table_type = "pca_fit_summary")),
+  dependencies = list(
+    identity("scworkbench_runtime", "wb_prim_feature_table",
+      ">=0.1.0,<0.2.0"),
+    identity("irlba_runtime", "prcomp_irlba", ">=2.3.0,<3.0.0", "irlba")),
+  promotion_closure = pca_closure, replay_equivalence = pca_replay,
+  retained_parameters = lapply(names(pca_params), function(name) list(
+    name = name, source = "effective_parameter_value", parameter = name,
+    required = TRUE)),
+  public_interface = list(intent = list("matrix", "pca", "space"),
+    inputs = list(list(name = "matrix", label = "matrix",
+      help = "Feature-by-cell input matrix."),
+      list(name = "features", label = "features",
+        help = "Optional selected feature table.")),
+    parameters = lapply(names(pca_params), function(name) list(name = name,
+      type = if (name %in% c("n_components", "seed", "chunk_size")) "int"
+        else if (name %in% c("center", "scale", "overwrite")) "bool"
+        else if (name == "max_dense_gb") "dbl"
+        else if (name == "feature_ids") "string_vec"
+        else if (name == "backend") "choice" else "string",
+      help = paste("PCA", name, "parameter."))),
+    outputs = lapply(pca_outputs, function(name) list(name = name,
+      description = paste("PCA", name, "output.")))))
 manifest <- list(
   schema_version = "scworkbench.operation_pack.v3", pack_abi_version = "3",
   identity_scheme = "scworkbench.operation_pack.canonical_json.v1",
@@ -68,7 +185,8 @@ manifest <- list(
           c("k", "n_iterations", "seed")) "int" else if (name == "weight")
           "bool" else "dbl", help = paste("Leiden", name, "parameter."))),
       outputs = list(list(name = "clusters",
-        description = "Categorical Leiden label for each effective cell."))))))
+        description = "Categorical Leiden label for each effective cell.")))),
+    pca))
 path <- file.path(root, "inst", "scworkbench", "operation-pack.json")
 jsonlite::write_json(manifest, path, auto_unbox = TRUE, pretty = TRUE,
   null = "null", digits = NA)
