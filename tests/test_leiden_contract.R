@@ -31,8 +31,11 @@ test_representation_old_core_equivalence_contract <- function() {
   if (!requireNamespace("igraph", quietly = TRUE) ||
       !requireNamespace("RANN", quietly = TRUE)) return(structure(TRUE,
     skip = "igraph or RANN is not installed"))
-  reference <- jsonlite::read_json(
-    "tests/fixtures/leiden_old_core_reference.json", simplifyVector = TRUE)
+  fixture_path <- if (file.exists(file.path("tests", "fixtures",
+      "leiden_old_core_reference.json"))) file.path("tests", "fixtures",
+      "leiden_old_core_reference.json") else file.path("fixtures",
+      "leiden_old_core_reference.json")
+  reference <- jsonlite::read_json(fixture_path, simplifyVector = TRUE)
   stopifnot(identical(reference$old_core_commit,
     "19b69bd99bccd81b4e62d839c7d4016984aeec36"))
   fixture <- representation_fixture()
