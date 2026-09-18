@@ -1,10 +1,10 @@
-args <- commandArgs(trailingOnly = FALSE)
-file_arg <- sub("^--file=", "", args[grepl("^--file=", args)])
-root <- if (length(file_arg)) normalizePath(file.path(dirname(file_arg),
-  ".."), mustWork = TRUE) else normalizePath(".", mustWork = TRUE)
-source(file.path(root, "tests", "helper_representation_fixture.R"),
+test_dir <- if (file.exists("helper_representation_fixture.R")) "." else
+  "tests"
+root <- normalizePath(if (identical(test_dir, ".")) ".." else ".",
+  mustWork = TRUE)
+source(file.path(test_dir, "helper_representation_fixture.R"),
   local = .GlobalEnv)
-files <- sort(list.files(file.path(root, "tests"), pattern = "^test_.*\\.R$",
+files <- sort(list.files(test_dir, pattern = "^test_.*\\.R$",
   full.names = TRUE))
 for (file in files) source(file, local = .GlobalEnv)
 tests <- sort(ls(.GlobalEnv, pattern = "^test_representation_"))
