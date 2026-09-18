@@ -1,0 +1,230 @@
+{
+  "schema_version": "scworkbench.operation_pack.v3",
+  "pack_abi_version": "3",
+  "identity_scheme": "scworkbench.operation_pack.canonical_json.v1",
+  "namespace": "scwbrepresentation",
+  "package": {
+    "name": "scwbRepresentation",
+    "version": "0.1.0"
+  },
+  "backend": "R",
+  "compatibility": {
+    "scworkbench": {
+      "minimum": "0.1.0",
+      "maximum_exclusive": "0.2.0"
+    },
+    "pack_abi": {
+      "minimum": "3",
+      "maximum": "3"
+    }
+  },
+  "entry_point": "scwbRepresentation::register_operation_pack",
+  "operations": [
+    {
+      "name": "leiden",
+      "qualified_name": "scwbrepresentation::leiden",
+      "title": "Leiden clustering",
+      "description": "Graph clustering on a kNN graph derived from an embedding space.",
+      "runner": ".run_leiden",
+      "inputs": [
+        {
+          "name": "space",
+          "kind": "space",
+          "required": true,
+          "alignment": "cell_ordered"
+        }
+      ],
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "dims": {
+            "type": ["array", "null"],
+            "default": null,
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "k": {
+            "type": "integer",
+            "default": 30,
+            "minimum": 5,
+            "maximum": 200
+          },
+          "resolution": {
+            "type": "number",
+            "default": 1,
+            "minimum": 0.01,
+            "maximum": 10
+          },
+          "n_iterations": {
+            "type": "integer",
+            "default": 2,
+            "minimum": 1
+          },
+          "seed": {
+            "type": "integer",
+            "default": 1
+          },
+          "weight": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "dimension_policies": [
+        {
+          "output": "clusters",
+          "policy": "authenticated_output_axes_v1",
+          "shape": "one_per_cell",
+          "cell_axis": {
+            "source": "effective_cells_v1",
+            "input": "space"
+          },
+          "row_order": "input_cell_order_v1",
+          "missing_values": "forbidden"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "clusters",
+          "category": "terminal_artifact",
+          "kind": "cell_vector",
+          "storage_profile": "terminal_primitive_v1",
+          "allocated_id_key": "clusters_id",
+          "required": true,
+          "promotion_group": "clusters",
+          "value_kind": "categorical"
+        }
+      ],
+      "dependencies": [
+        {
+          "requirement_id": "scworkbench_runtime",
+          "kind": "r_package",
+          "name": "scworkbench",
+          "version": {
+            "scheme": "r_package_version_constraint_v1",
+            "specifier": ">=0.1.0,<0.2.0"
+          },
+          "disposition": "required",
+          "import_probe": "wb_prim_cell_vector"
+        },
+        {
+          "requirement_id": "igraph_runtime",
+          "kind": "r_package",
+          "name": "igraph",
+          "version": {
+            "scheme": "r_package_version_constraint_v1",
+            "specifier": ">=2.0.0,<3.0.0"
+          },
+          "disposition": "required",
+          "import_probe": "cluster_leiden"
+        },
+        {
+          "requirement_id": "rann_runtime",
+          "kind": "r_package",
+          "name": "RANN",
+          "version": {
+            "scheme": "r_package_version_constraint_v1",
+            "specifier": ">=2.6.0,<3.0.0"
+          },
+          "disposition": "required",
+          "import_probe": "nn2"
+        }
+      ],
+      "promotion_closure": {
+        "clusters": [
+          "clusters"
+        ]
+      },
+      "replay_equivalence": {
+        "clusters": "exact_canonical_value"
+      },
+      "retained_parameters": [
+        {
+          "name": "dims",
+          "source": "parameter_value",
+          "parameter": "dims",
+          "required": false
+        },
+        {
+          "name": "k",
+          "source": "parameter_value",
+          "parameter": "k"
+        },
+        {
+          "name": "resolution",
+          "source": "parameter_value",
+          "parameter": "resolution"
+        },
+        {
+          "name": "n_iterations",
+          "source": "parameter_value",
+          "parameter": "n_iterations"
+        },
+        {
+          "name": "seed",
+          "source": "parameter_value",
+          "parameter": "seed"
+        },
+        {
+          "name": "weight",
+          "source": "parameter_value",
+          "parameter": "weight"
+        }
+      ],
+      "public_interface": {
+        "intent": [
+          "cluster"
+        ],
+        "inputs": [
+          {
+            "name": "space",
+            "label": "space",
+            "help": "Cell-aligned embedding space."
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "type": "list",
+            "help": "Leiden dims parameter."
+          },
+          {
+            "name": "k",
+            "type": "int",
+            "help": "Leiden k parameter."
+          },
+          {
+            "name": "resolution",
+            "type": "dbl",
+            "help": "Leiden resolution parameter."
+          },
+          {
+            "name": "n_iterations",
+            "type": "int",
+            "help": "Leiden n_iterations parameter."
+          },
+          {
+            "name": "seed",
+            "type": "int",
+            "help": "Leiden seed parameter."
+          },
+          {
+            "name": "weight",
+            "type": "bool",
+            "help": "Leiden weight parameter."
+          }
+        ],
+        "outputs": [
+          {
+            "name": "clusters",
+            "description": "Categorical Leiden label for each effective cell."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "fixture_version": "scwbrepresentation-leiden-equivalence-v1",
+  "old_core_commit": "19b69bd99bccd81b4e62d839c7d4016984aeec36",
+  "input": {
+    "space_id": "latent",
+    "effective_cells": ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"],
+    "dimensions": [
+      [0, 0, 1],
+      [0.1, 0.1, 1.1],
+      [0.2, 0, 0.9],
+      [0.1, -0.1, 1],
+      [10, 10, 3],
+      [10.1, 10.1, 3.1],
+      [10.2, 10, 2.9],
+      [10.1, 9.9, 3]
+    ]
+  },
+  "retained_effective_parameters": {
+    "space_id": "latent",
+    "cell_set_n": 8,
+    "k": 5,
+    "dims": null,
+    "resolution": 1,
+    "n_iterations": 2,
+    "seed": 7,
+    "weight": true
+  },
+  "provenance": {
+    "op_name": "leiden",
+    "symbolic_inputs": {
+      "cell_set": "all",
+      "min_cells": 1,
+      "k": 5,
+      "resolution": 1,
+      "n_iterations": 2,
+      "seed": 7,
+      "weight": true,
+      "space": "latent"
+    },
+    "execution_inputs": {
+      "effective_n": 8,
+      "resolved": {
+        "space": {
+          "kind": "space",
+          "space_id": "latent"
+        }
+      }
+    },
+    "operation_version": "1"
+  },
+  "terminal": {
+    "kind": "cell_vector",
+    "value_type": "categorical",
+    "cell_id": ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"],
+    "value": ["1", "1", "1", "1", "2", "2", "2", "2"],
+    "meta": {
+      "label": "Leiden clusters"
+    },
+    "content_sha256": "e2cbe017ed506b980d455d447b20b5bf714a909d30e09fc91f85875d52bfeba4",
+    "content_identity_scheme": "scworkbench.content.object.canonical-json.v1",
+    "promoted_output_sha256": "e2cbe017ed506b980d455d447b20b5bf714a909d30e09fc91f85875d52bfeba4"
+  }
+}
