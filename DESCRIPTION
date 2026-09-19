@@ -4,12 +4,12 @@ Title: Provisional Representation Operations for scworkbench
 Version: 0.1.0
 Authors@R: person("Hendrik A.", "de Weerd", role = c("aut", "cre"), email = "dirkdeweerd.work@gmail.com")
 Description: Explicitly activated provisional ABI v3 operation pack containing
-    bounded Leiden clustering and parameter-axis-authenticated PCA for
-    scworkbench. It is not the complete Representation pack or a
-    standard-profile dependency.
+    bounded Leiden clustering, parameter-axis-authenticated PCA, and
+    contained-model UMAP fit and transform operations for scworkbench. It is
+    not the complete Representation pack or a standard-profile dependency.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
-Imports: scworkbench, igraph, irlba, RANN, stats
-Suggests: jsonlite
+Imports: scworkbench, igraph, irlba, RANN, stats, uwot
+Suggests: DBI, digest, jsonlite, rnndescent, FNN
 RoxygenNote: 7.3.3

@@ -134,7 +134,7 @@ test_representation_manifest_scope_and_dependency_contract <- function() {
   stopifnot(identical(manifest$namespace, "scwbrepresentation"),
     identical(manifest$pack_abi_version, "3"),
     setequal(vapply(manifest$operations, `[[`, "", "name"),
-      c("leiden", "pca_fit")),
+      c("leiden", "pca_fit", "umap_fit", "umap_transform")),
     identical(vapply(manifest$operations[[which(vapply(manifest$operations,
       `[[`, "", "name") == "leiden")]]$dependencies, `[[`, "",
       "name"), c("scworkbench", "igraph", "RANN")))
