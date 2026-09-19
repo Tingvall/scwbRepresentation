@@ -11,6 +11,6 @@ Description: Explicitly activated provisional ABI v3 operation pack containing
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
-Imports: scworkbench, igraph, irlba, RANN, stats, uwot
-Suggests: DBI, digest, jsonlite, rnndescent, FNN
+Imports: scworkbench, igraph, irlba, Matrix, RANN, stats, uwot
+Suggests: DBI, digest, fs, jsonlite, rnndescent, FNN
 RoxygenNote: 7.3.3
