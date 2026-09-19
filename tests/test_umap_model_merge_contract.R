@@ -189,8 +189,11 @@ test_representation_umap_contained_model_and_merge_contract <- function() {
       skip = "uwot and rnndescent are required for the UMAP contract"))
   fixture <- representation_umap_fixture()
   b <- fixture$bundle
+  relocated_parent <- tempfile("scwbRepresentation-umap-relocated-")
+  relocated <- file.path(relocated_parent, "transferred.bundle")
   on.exit({ try(wb_close_bundle(b), silent = TRUE)
-    unlink(fixture$root, recursive = TRUE, force = TRUE) }, add = TRUE)
+    unlink(fixture$root, recursive = TRUE, force = TRUE)
+    unlink(relocated_parent, recursive = TRUE, force = TRUE) }, add = TRUE)
   fit <- wb_session_run_op(wb_session_new(), b, "umap_fit", inputs = list(
     space = "pca", dims = 1:3, space_id_out = "umap.pca",
     n_neighbors = 5L, min_dist = .2, metric = "euclidean",
@@ -207,13 +210,27 @@ test_representation_umap_contained_model_and_merge_contract <- function() {
   model_id <- promoted$promoted$artifact_id[
     promoted$promoted$output == "model"][[1L]]
   before <- wb_space(b, "umap.pca")
+  stopifnot(isTRUE(wb_finalize_recipient_bundle(b)$ready))
   wb_close_bundle(b)
-  b <- wb_open_bundle(fixture$root)
+  dir.create(relocated_parent, recursive = TRUE, showWarnings = FALSE)
+  fs::dir_copy(fixture$root, relocated)
+  b <- wb_open_bundle(relocated)
   fixture$bundle <- b
   model <- wb_art_load(b, model_id, expected_kind = "model_ref")
-  stopifnot(file.exists(model$model_path),
+  stopifnot(dir.exists(model$model_path),
+    startsWith(normalizePath(model$model_path, winslash = "/",
+      mustWork = TRUE), normalizePath(relocated, winslash = "/",
+        mustWork = TRUE)),
+    !startsWith(normalizePath(model$model_path, winslash = "/",
+      mustWork = TRUE), normalizePath(fixture$root, winslash = "/",
+        mustWork = TRUE)),
+    file.exists(file.path(model$model_path, model$model_primary_path)),
     identical(model$model_linkage$engine, "uwot"),
-    identical(model$model_linkage$model_type, "uwot_umap"))
+    identical(model$model_linkage$model_type, "uwot_umap"),
+    identical(model$model_tree_manifest$manifest_identity$sha256,
+      fit$run$outputs$model$model_tree_manifest$manifest_identity$sha256),
+    identical(model$model_payload_manifest_identity$sha256,
+      fit$run$outputs$model$model_payload_manifest_identity$sha256))
 
   projected <- wb_session_run_op(wb_session_new(), b, "umap_transform",
     inputs = list(model = wb_ref_artifact(model_id, "model"), in_space = "pca", dims = 1:3,
@@ -237,7 +254,17 @@ test_representation_umap_contained_model_and_merge_contract <- function() {
       before_matrix[untouched, , drop = FALSE]),
     !identical(after_matrix[fixture$cells[seq_len(8L)], , drop = FALSE],
       before_matrix[fixture$cells[seq_len(8L)], , drop = FALSE]),
-    isTRUE(wb_bundle_validation_report(fixture$root, "content")$ok))
+    isTRUE(wb_finalize_recipient_bundle(b)$ready))
+  wb_close_bundle(b)
+  b <- NULL
+  recipient <- wb_bundle_validation_report(relocated, "recipient")
+  if (!isTRUE(recipient$ok)) stop(paste(
+    recipient$diagnostics$code, recipient$diagnostics$entity_kind,
+    recipient$diagnostics$entity_id, recipient$diagnostics$expected,
+    recipient$diagnostics$observed, recipient$diagnostics$message,
+    collapse = " | "), call. = FALSE)
+  stopifnot(identical(recipient$pre_validation_fingerprint,
+    recipient$post_validation_fingerprint))
   TRUE
 }
 
@@ -305,8 +332,10 @@ test_representation_umap_corruption_and_atomic_rollback_contract <- function() {
   after_retry <- wb_space(b, "umap.pca")
 
   model <- wb_art_load(b, model_id, expected_kind = "model_ref")
-  path <- model$model_path
+  path <- if (!is.null(model$model_tree_manifest)) file.path(
+    model$model_path, model$model_primary_path) else model$model_path
   bytes <- readBin(path, "raw", n = file.info(path)$size)
+  Sys.chmod(path, mode = "0644")
   writeBin(c(bytes, as.raw(0L)), path)
   corrupted <- try(wb_session_run_op(wb_session_new(), b,
     "umap_transform", inputs = list(model = wb_ref_artifact(model_id, "model"), in_space = "pca",
