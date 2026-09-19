@@ -1,0 +1,288 @@
+{
+  "schema": "scwbrepresentation.knn.old_core_reference.v1",
+  "core_commit": "c95f95d5c7fa6b121636408e4cf42f0ab578dd43",
+  "inputs": {
+    "cells": ["q1", "q2", "c1", "c2", "c3"],
+    "features": ["f1", "f2"],
+    "values": [
+      [
+        0,
+        0,
+        1,
+        2,
+        10
+      ],
+      [
+        0,
+        0,
+        10,
+        20,
+        100
+      ]
+    ],
+    "coordinates": [
+      [
+        0,
+        0
+      ],
+      [
+        10,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        9,
+        0
+      ]
+    ]
+  },
+  "arguments": {
+    "space_id": "latent",
+    "query_cells": ["q1", "q2"],
+    "candidate_cells": ["c1", "c2", "c3"],
+    "k": 2,
+    "include_query": false
+  },
+  "neighbors": {
+    "params": {
+      "space_id": "latent",
+      "n_query": 2,
+      "n_candidates": 3,
+      "k": 2,
+      "include_query": false
+    },
+    "outputs": {
+      "neighbors": {
+        "value": {
+          "kind": "obs_table",
+          "table_type": "knn_neighbors",
+          "entity_kind": "cell",
+          "table": [
+            {
+              "query_cell_id": "q1",
+              "neighbor_rank": 1,
+              "cell_id": "c1",
+              "distance": 1
+            },
+            {
+              "query_cell_id": "q1",
+              "neighbor_rank": 2,
+              "cell_id": "c2",
+              "distance": 2
+            },
+            {
+              "query_cell_id": "q2",
+              "neighbor_rank": 1,
+              "cell_id": "c3",
+              "distance": 1
+            },
+            {
+              "query_cell_id": "q2",
+              "neighbor_rank": 2,
+              "cell_id": "c2",
+              "distance": 8
+            }
+          ],
+          "meta": {
+            "space_id": "latent",
+            "k": 2,
+            "include_query": false
+          }
+        },
+        "content_identity": {
+          "structural_fingerprint": "6bb3b12fc34087728bb1420623fd5a8d4aed2cb1ee29ad0e1981124a0029ff76",
+          "content_sha256": "5a625f3f17dbcff9d5e26ad894ec46c129ceaabc307cc718ae97c04fbd9bf2d3",
+          "content_identity_scheme": "scworkbench.content.table.row-json-fold.v1",
+          "verification_level": "content",
+          "verification_status": "content_verified"
+        }
+      },
+      "neighbor_distance": {
+        "value": {
+          "kind": "cell_vector_family",
+          "key": ["q1", "q1", "q2", "q2"],
+          "cell_id": ["c1", "c2", "c3", "c2"],
+          "value": [1, 2, 1, 8],
+          "value_type": "continuous",
+          "meta": []
+        },
+        "content_identity": {
+          "structural_fingerprint": "568e2c0885bb67f8bd920c46d83f57bf7ec92ed77a0acf56a01735c59e83f6e0",
+          "content_sha256": "39a097db642c94b594f07836456ab988f83578415d3dd5c1e434c5d0017d7dfe",
+          "content_identity_scheme": "scworkbench.content.object.canonical-json.v1",
+          "verification_level": "content",
+          "verification_status": "content_verified"
+        }
+      }
+    }
+  },
+  "pseudobulk": {
+    "sum": {
+      "params": {
+        "matrix_id": "RNA",
+        "space_id": "latent",
+        "n_query": 2,
+        "n_candidates": 3,
+        "n_features": 2,
+        "k": 2,
+        "aggregate": "sum",
+        "include_query": false
+      },
+      "outputs": {
+        "pseudobulk_table": {
+          "value": {
+            "kind": "feature_table",
+            "table_type": "knn_pseudobulk",
+            "table": [
+              {
+                "feature_id": "f1",
+                "query_cell_id": "q1",
+                "n_neighbors": 2,
+                "aggregate": "sum",
+                "value": 3
+              },
+              {
+                "feature_id": "f2",
+                "query_cell_id": "q1",
+                "n_neighbors": 2,
+                "aggregate": "sum",
+                "value": 30
+              },
+              {
+                "feature_id": "f1",
+                "query_cell_id": "q2",
+                "n_neighbors": 2,
+                "aggregate": "sum",
+                "value": 12
+              },
+              {
+                "feature_id": "f2",
+                "query_cell_id": "q2",
+                "n_neighbors": 2,
+                "aggregate": "sum",
+                "value": 120
+              }
+            ],
+            "meta": {
+              "matrix_id": "RNA",
+              "space_id": "latent",
+              "k": 2,
+              "aggregate": "sum"
+            }
+          },
+          "content_identity": {
+            "structural_fingerprint": "c9b3ea60222cdf8c1bae1e1210ff80e91fb54a3bc2046db46dd0765b90fa919c",
+            "content_sha256": "6485aa978b691024748bb222065674bb1fb9a88360185c6756a1dd17820ae534",
+            "content_identity_scheme": "scworkbench.content.table.row-json-fold.v1",
+            "verification_level": "content",
+            "verification_status": "content_verified"
+          }
+        },
+        "neighbor_distance": {
+          "value": {
+            "kind": "cell_vector_family",
+            "key": ["q1", "q1", "q2", "q2"],
+            "cell_id": ["c1", "c2", "c3", "c2"],
+            "value": [1, 2, 1, 8],
+            "value_type": "continuous",
+            "meta": []
+          },
+          "content_identity": {
+            "structural_fingerprint": "568e2c0885bb67f8bd920c46d83f57bf7ec92ed77a0acf56a01735c59e83f6e0",
+            "content_sha256": "39a097db642c94b594f07836456ab988f83578415d3dd5c1e434c5d0017d7dfe",
+            "content_identity_scheme": "scworkbench.content.object.canonical-json.v1",
+            "verification_level": "content",
+            "verification_status": "content_verified"
+          }
+        }
+      }
+    },
+    "mean": {
+      "params": {
+        "matrix_id": "RNA",
+        "space_id": "latent",
+        "n_query": 2,
+        "n_candidates": 3,
+        "n_features": 2,
+        "k": 2,
+        "aggregate": "mean",
+        "include_query": false
+      },
+      "outputs": {
+        "pseudobulk_table": {
+          "value": {
+            "kind": "feature_table",
+            "table_type": "knn_pseudobulk",
+            "table": [
+              {
+                "feature_id": "f1",
+                "query_cell_id": "q1",
+                "n_neighbors": 2,
+                "aggregate": "mean",
+                "value": 1.5
+              },
+              {
+                "feature_id": "f2",
+                "query_cell_id": "q1",
+                "n_neighbors": 2,
+                "aggregate": "mean",
+                "value": 15
+              },
+              {
+                "feature_id": "f1",
+                "query_cell_id": "q2",
+                "n_neighbors": 2,
+                "aggregate": "mean",
+                "value": 6
+              },
+              {
+                "feature_id": "f2",
+                "query_cell_id": "q2",
+                "n_neighbors": 2,
+                "aggregate": "mean",
+                "value": 60
+              }
+            ],
+            "meta": {
+              "matrix_id": "RNA",
+              "space_id": "latent",
+              "k": 2,
+              "aggregate": "mean"
+            }
+          },
+          "content_identity": {
+            "structural_fingerprint": "c9b3ea60222cdf8c1bae1e1210ff80e91fb54a3bc2046db46dd0765b90fa919c",
+            "content_sha256": "906e8533f2e835707741b162dd790568605db8cd511a0767ece2d32bb2fe7fcf",
+            "content_identity_scheme": "scworkbench.content.table.row-json-fold.v1",
+            "verification_level": "content",
+            "verification_status": "content_verified"
+          }
+        },
+        "neighbor_distance": {
+          "value": {
+            "kind": "cell_vector_family",
+            "key": ["q1", "q1", "q2", "q2"],
+            "cell_id": ["c1", "c2", "c3", "c2"],
+            "value": [1, 2, 1, 8],
+            "value_type": "continuous",
+            "meta": []
+          },
+          "content_identity": {
+            "structural_fingerprint": "568e2c0885bb67f8bd920c46d83f57bf7ec92ed77a0acf56a01735c59e83f6e0",
+            "content_sha256": "39a097db642c94b594f07836456ab988f83578415d3dd5c1e434c5d0017d7dfe",
+            "content_identity_scheme": "scworkbench.content.object.canonical-json.v1",
+            "verification_level": "content",
+            "verification_status": "content_verified"
+          }
+        }
+      }
+    }
+  }
+}

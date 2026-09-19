@@ -12,5 +12,7 @@ register_operation_pack <- function() {
     list(`scwbrepresentation::leiden` = .run_leiden,
       `scwbrepresentation::pca_fit` = .run_pca_fit,
       `scwbrepresentation::umap_fit` = .run_umap_fit,
-      `scwbrepresentation::umap_transform` = .run_umap_transform))
+      `scwbrepresentation::umap_transform` = .run_umap_transform,
+      `scwbrepresentation::knn_neighbors` = .run_knn_neighbors,
+      `scwbrepresentation::knn_pseudobulk` = .run_knn_pseudobulk))
 }
