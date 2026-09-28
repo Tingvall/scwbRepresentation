@@ -166,6 +166,54 @@ test_representation_knn_atomic_agreement_contract <- function() {
   TRUE
 }
 
+test_representation_knn_pseudobulk_zero_neighbor_contract <- function() {
+  x <- .knn_fixture(); on.exit(.knn_close(x), add = TRUE)
+  old_hook <- getOption("scworkbench.operation_pack_v3_output_test_hook")
+  on.exit(options(scworkbench.operation_pack_v3_output_test_hook =
+    old_hook), add = TRUE)
+  counts <- function() vapply(c("artifacts", "prov_runs", "prov_commits"),
+    function(table) as.integer(DBI::dbGetQuery(x$bundle$con,
+      paste0("SELECT COUNT(*) AS n FROM ", table, ";"))$n[[1L]]),
+    integer(1))
+  before <- list(counts = counts(), artifacts = wb_art_list(x$bundle))
+  omit_q2_membership <- function(writes, ...) {
+    family <- writes$neighbor_distance$value
+    keep <- family$key == "q1"
+    family$key <- family$key[keep]
+    family$cell_id <- family$cell_id[keep]
+    family$value <- family$value[keep]
+    writes$neighbor_distance$value <- family
+    table <- writes$pseudobulk_table$value$table
+    q2 <- table$query_cell_id == "q2"
+    table$n_neighbors[q2] <- 0L
+    table$value[q2] <- 999
+    writes$pseudobulk_table$value$table <- table
+    writes
+  }
+  inputs <- list(matrix = "RNA", space = "latent",
+    query_cells = c("q1", "q2"), candidate_cells = c("c1", "c2"),
+    features = x$features, k = 1L, include_query = FALSE,
+    aggregate = "sum", min_cells = 1L)
+  options(scworkbench.operation_pack_v3_output_test_hook =
+    omit_q2_membership)
+  rejected <- tryCatch(wb_session_run_op(wb_session_new(), x$bundle,
+    "knn_pseudobulk", inputs = inputs), error = identity)
+  options(scworkbench.operation_pack_v3_output_test_hook = NULL)
+  after <- list(counts = counts(), artifacts = wb_art_list(x$bundle))
+  stopifnot(inherits(rejected, "wb_operation_pack_error"),
+    identical(rejected$code, "PYBENCH_OUTPUT_INVALID"),
+    identical(rejected$phase, "audit"),
+    grepl("zero_rows_forbidden_v1", conditionMessage(rejected),
+      fixed = TRUE), identical(before, after))
+
+  positive <- wb_session_run_op(wb_session_new(), x$bundle,
+    "knn_pseudobulk", inputs = inputs)
+  table <- positive$run$outputs$pseudobulk_table$table
+  stopifnot(all(table$n_neighbors > 0L),
+    identical(unique(table$query_cell_id), c("q1", "q2")))
+  TRUE
+}
+
 test_representation_knn_pack_ownership_contract <- function() {
   representation_activate_pack()
   stopifnot(all(c("scwbrepresentation::knn_neighbors",
