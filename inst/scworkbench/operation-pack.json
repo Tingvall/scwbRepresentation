@@ -652,11 +652,11 @@
           },
           {
             "name": "variance",
-            "description": "PCA variance output."
+            "description": "PCA component variances; historical variance_explained divides by all returned fit sdevs. Explicit denominator metadata, retained-component fractions and separate input-total fractions describe their distinct scope."
           },
           {
             "name": "fit_summary",
-            "description": "PCA fit_summary output."
+            "description": "PCA fit settings, constant-feature filtering and explicit returned-fit, retained-component and fitted-input variance denominators."
           }
         ]
       }

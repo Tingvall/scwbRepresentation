@@ -25,3 +25,32 @@ Inspect the interface for parameters, typed references and terminal closure.
 Core supplies slicing and owns publication/provenance; pack code receives no
 committed storage authority. Inspection is pack-free; execution/replay requires
 the compatible activated pack.
+
+## PCA variance denominators
+
+`variance` and `fit_summary` retain the historical fields unchanged.
+`variance_explained` divides squared component standard deviations by the sum
+of **all sdevs returned by the fit backend**, identified by
+`variance_explained_denominator` and its numeric `_value`. For truncated irlba
+that is the retained block; prcomp can return a full spectrum even when scores
+are truncated. Do not interpret every historical cumulative value of one as
+all input variation captured.
+
+`retained_component_variance_fraction` and its `cumulative_` counterpart divide
+by `retained_component_variance_total` (only emitted components). Separately,
+`input_total_variance_fraction` and `cumulative_input_total_variance_fraction`
+divide by `input_total_variance`: the sum of squared entries of the matrix
+actually fitted, after constant-feature removal, optional centering and backend
+scaling, divided by `n_cells - 1`. This is total sample variance when centered;
+without centering it is a second-moment quantity including the mean. With
+scaling it equals the number of fitted nonconstant features for both supported
+backends. Existing feature moments supply this total without another input scan.
+A nonfinite/nonpositive denominator yields numeric missing input-total fractions
+and `input_total_variance_status="nonfinite_or_nonpositive_input_total"`.
+
+For a two-component truncated fit, retained cumulative fraction is one while
+input-total cumulative fraction can be much smaller. Inspect the variance
+obs-table using the promoted `variance` artifact and `wb_art_load()$table`.
+New outputs have new content/pack identities; old artifacts and their identity
+schemes are not rewritten. This changed manifest requires its own qualification;
+the old standard-profile receipt does not qualify this source tuple.

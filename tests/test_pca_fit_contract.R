@@ -114,6 +114,18 @@ test_representation_pca_fit_old_core_equivalence_contract <- function() {
       overwrite = FALSE, max_dense_gb = 1, chunk_size = 100L))
   view <- wb_session_view(result$session)
   observed <- lapply(result$run$outputs, function(x) {
+    if (x$kind == "obs_table" && x$table_type %in% c("pca_variance_explained", "pca_fit_summary")) {
+      additive <- c("variance_explained_denominator", "variance_explained_denominator_value",
+        "retained_component_variance_total", "retained_component_variance_fraction",
+        "cumulative_retained_component_variance_fraction", "input_total_variance",
+        "input_total_variance_fraction", "cumulative_input_total_variance_fraction",
+        "input_total_variance_definition", "input_total_variance_status")
+      x$table <- x$table[, setdiff(names(x$table), additive), drop = FALSE]
+    }
+    # This immutable oracle predates typed table persistence. Project only this
+    # comparison through its original storage/identity contract; actual outputs
+    # retain the current typed format and their new additive columns.
+    if (x$kind %in% c("feature_table", "obs_table")) x$table_storage <- NULL
     identity <- scworkbench:::.wb_prov_payload_identity(view, x)
     list(scheme = identity$content_identity_scheme,
       sha256 = identity$content_sha256)

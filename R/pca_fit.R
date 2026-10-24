@@ -78,11 +78,37 @@
     space_id = space_id, stringsAsFactors = FALSE)
   stdev <- as.numeric(fit$sdev[seq_len(n_components)])
   variance <- stdev^2
+  # Historical fractions use every sdev returned by the backend. prcomp may
+  # return more sdevs than score columns; prcomp_irlba returns the retained block.
   total_variance <- sum(as.numeric(fit$sdev)^2)
+  retained_variance <- sum(variance)
+  # Reuse the moments already computed for constant-feature filtering. With no
+  # centering, singular-value "variance" is a second moment, not sample variance.
+  # Both admitted backends scale by sqrt(sum(centered_or_raw_x^2)/(n-1)).
+  input_variance <- if (isTRUE(params$scale)) as.numeric(sum(keep)) else {
+    moments <- feature_var[keep]
+    if (!isTRUE(params$center)) moments <- moments +
+      feature_mean[keep]^2 * nrow(fit_x) / (nrow(fit_x) - 1L)
+    sum(moments)
+  }
+  input_variance_available <- is.finite(input_variance) && input_variance > 0
+  input_variance_reason <- if (input_variance_available) "available" else
+    "nonfinite_or_nonpositive_input_total"
+  if (!input_variance_available) input_variance <- NA_real_
   variance_table <- data.frame(PC = labels,
     component = seq_len(n_components), stdev = stdev,
     variance = variance, variance_explained = variance / total_variance,
     cumulative_variance_explained = cumsum(variance / total_variance),
+    variance_explained_denominator = "sum_returned_fit_component_variances",
+    variance_explained_denominator_value = total_variance,
+    retained_component_variance_total = retained_variance,
+    retained_component_variance_fraction = variance / retained_variance,
+    cumulative_retained_component_variance_fraction = cumsum(variance / retained_variance),
+    input_total_variance = input_variance,
+    input_total_variance_fraction = variance / input_variance,
+    cumulative_input_total_variance_fraction = cumsum(variance / input_variance),
+    input_total_variance_definition = "fit_input_sum_squares_over_n_minus_one",
+    input_total_variance_status = input_variance_reason,
     matrix_id = context$input_ids$matrix, space_id = space_id,
     stringsAsFactors = FALSE)
   summary <- data.frame(matrix_id = context$input_ids$matrix,
@@ -93,7 +119,14 @@
       length(fit_features)), n_components = n_components,
     center = isTRUE(params$center), scale = isTRUE(params$scale),
     backend = backend, seed = seed, approx_dense_gb = approx_gb,
-    max_dense_gb = max_dense_gb, stringsAsFactors = FALSE)
+    max_dense_gb = max_dense_gb,
+    variance_explained_denominator = "sum_returned_fit_component_variances",
+    variance_explained_denominator_value = total_variance,
+    retained_component_variance_total = retained_variance,
+    input_total_variance = input_variance,
+    input_total_variance_definition = "fit_input_sum_squares_over_n_minus_one",
+    input_total_variance_status = input_variance_reason,
+    stringsAsFactors = FALSE)
   writers$write_terminal_primitive("loadings",
     scworkbench::wb_prim_feature_table(loadings, table_type = "pca_loadings",
       meta = list(matrix_id = context$input_ids$matrix,

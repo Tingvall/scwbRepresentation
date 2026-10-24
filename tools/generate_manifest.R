@@ -143,7 +143,14 @@ pca <- list(name = "pca_fit", qualified_name = "scwbrepresentation::pca_fit",
         else if (name == "backend") "choice" else "string",
       help = paste("PCA", name, "parameter."))),
     outputs = lapply(pca_outputs, function(name) list(name = name,
-      description = paste("PCA", name, "output.")))))
+      description = if (name == "variance") paste(
+        "PCA component variances; historical variance_explained divides by all",
+        "returned fit sdevs. Explicit denominator metadata, retained-component",
+        "fractions and separate input-total fractions describe their distinct scope.")
+      else if (name == "fit_summary") paste(
+        "PCA fit settings, constant-feature filtering and explicit returned-fit,",
+        "retained-component and fitted-input variance denominators.")
+      else paste("PCA", name, "output.")))))
 umap_dims <- list(type = c("array", "null"), default = NULL,
   uniqueItems = TRUE, items = list(type = "integer", minimum = 1L))
 fit_params <- list(dims = umap_dims,
