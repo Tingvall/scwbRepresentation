@@ -5,7 +5,7 @@
   "namespace": "scwbrepresentation",
   "package": {
     "name": "scwbRepresentation",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "backend": "R",
   "compatibility": {
@@ -1211,6 +1211,20 @@
             "default": 1024,
             "minimum": 1,
             "maximum": 1000000
+          },
+          "backend": {
+            "type": "string",
+            "default": "rann_exact",
+            "enum": [
+              "rann_exact",
+              "brute_force"
+            ]
+          },
+          "query_chunk_size": {
+            "type": "integer",
+            "default": 1024,
+            "minimum": 1,
+            "maximum": 1000000
           }
         },
         "additionalProperties": false
@@ -1310,6 +1324,21 @@
           },
           "disposition": "required",
           "import_probe": "wb_prim_cell_vector_family"
+        },
+        {
+          "requirement_id": "rann_runtime",
+          "kind": "r_package",
+          "name": "RANN",
+          "version": {
+            "scheme": "r_package_version_constraint_v1",
+            "specifier": ">=2.6.0,<3.0.0"
+          },
+          "disposition": "optional",
+          "import_probe": "nn2",
+          "selected_when": {
+            "parameter": "backend",
+            "equals": "rann_exact"
+          }
         }
       ],
       "promotion_closure": {
@@ -1352,6 +1381,16 @@
           "name": "include_query",
           "source": "effective_parameter_value",
           "parameter": "include_query"
+        },
+        {
+          "name": "backend",
+          "source": "effective_parameter_value",
+          "parameter": "backend"
+        },
+        {
+          "name": "query_chunk_size",
+          "source": "effective_parameter_value",
+          "parameter": "query_chunk_size"
         }
       ],
       "public_interface": {
@@ -1392,6 +1431,16 @@
             "name": "space_chunk_size",
             "type": "int",
             "help": "kNN space_chunk_size parameter."
+          },
+          {
+            "name": "backend",
+            "type": "choice",
+            "help": "kNN backend parameter."
+          },
+          {
+            "name": "query_chunk_size",
+            "type": "int",
+            "help": "kNN query_chunk_size parameter."
           }
         ],
         "outputs": [

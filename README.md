@@ -13,6 +13,13 @@ authenticated query and candidate space axes. They publish a deterministic
 query/rank edge ledger, and pseudobulk reads only bounded feature/candidate
 matrix slices tied to that ledger.
 
+`knn_neighbors` defaults to bounded-query exact `RANN::nn2(eps = 0)` search.
+It canonicalizes neighbor ranks by distance and authenticated candidate order,
+falls back to the brute-force oracle for ambiguous boundary ties, and recomputes
+published distances with the oracle kernel. Set `backend = "brute_force"` for
+the explicit numerical oracle. `knn_pseudobulk` retains its established
+brute-force scientific implementation.
+
 ```r
 library(scworkbench)
 wb_operation_pack_load("scwbRepresentation")

@@ -289,11 +289,15 @@ cell_selector <- function(nullable = FALSE) list(type = if (nullable)
   c("array", "string", "null") else c("array", "string"),
   minItems = 1L, uniqueItems = TRUE,
   items = list(type = "string", minLength = 1L))
-knn_params <- list(query_cells = cell_selector(),
+knn_base_params <- list(query_cells = cell_selector(),
   candidate_cells = cell_selector(TRUE),
   k = parameter("integer", 100L, 1L, nullable = FALSE),
   include_query = list(type = "boolean", default = FALSE),
   space_chunk_size = parameter("integer", 1024L, 1L, 1000000L, FALSE))
+knn_params <- c(knn_base_params, list(
+  backend = list(type = "string", default = "rann_exact",
+    enum = list("rann_exact", "brute_force")),
+  query_chunk_size = parameter("integer", 1024L, 1L, 1000000L, FALSE)))
 knn_selectors <- list(
   list(parameter = "query_cells", role = "query", default_all_cells = FALSE,
     include_query_parameter = "include_query"),
@@ -324,6 +328,10 @@ knn_outputs <- list(
     kind = "cell_vector_family", storage_profile = "terminal_primitive_v1",
     allocated_id_key = "neighbor_distance_id", required = TRUE,
     promotion_group = "knn", value_kind = "continuous"))
+rann_dependency <- identity("rann_runtime", "nn2", ">=2.6.0,<3.0.0", "RANN")
+rann_dependency$disposition <- "optional"
+rann_dependency$selected_when <- list(parameter = "backend",
+  equals = "rann_exact")
 knn_neighbors <- list(name = "knn_neighbors",
   qualified_name = "scwbrepresentation::knn_neighbors",
   title = "kNN neighbors around query cells",
@@ -339,7 +347,8 @@ knn_neighbors <- list(name = "knn_neighbors",
     sparse_policy("neighbor_distance", "cell_vector_family", "neighbors")),
   outputs = knn_outputs,
   dependencies = list(identity("scworkbench_runtime",
-    "wb_prim_cell_vector_family", ">=0.1.0,<0.2.0")),
+    "wb_prim_cell_vector_family", ">=0.1.0,<0.2.0"),
+    rann_dependency),
   promotion_closure = list(neighbors = list("neighbor_distance", "neighbors"),
     neighbor_distance = list("neighbor_distance", "neighbors")),
   replay_equivalence = list(neighbors = "exact_canonical_value",
@@ -352,19 +361,24 @@ knn_neighbors <- list(name = "knn_neighbors",
       parameter = "candidate_cells"),
     list(name = "k", source = "effective_parameter_value", parameter = "k"),
     list(name = "include_query", source = "effective_parameter_value",
-      parameter = "include_query")),
+      parameter = "include_query"),
+    list(name = "backend", source = "effective_parameter_value",
+      parameter = "backend"),
+    list(name = "query_chunk_size", source = "effective_parameter_value",
+      parameter = "query_chunk_size")),
   public_interface = list(intent = list("neighbors", "geometry", "projection"),
     inputs = list(list(name = "space", label = "space",
       help = "Cell-aligned embedding space.")),
     parameters = lapply(names(knn_params), function(name) list(name = name,
-      type = if (name %in% c("k", "space_chunk_size")) "int" else if (
-        name == "include_query") "bool" else "cell_ids_or_set",
+      type = if (name %in% c("k", "space_chunk_size", "query_chunk_size")) "int" else if (
+        name == "include_query") "bool" else if (name == "backend") "choice"
+          else "cell_ids_or_set",
       help = paste("kNN", name, "parameter."))),
     outputs = list(list(name = "neighbors",
       description = "Ranked query-to-candidate neighbor table."),
       list(name = "neighbor_distance",
         description = "Sparse query-keyed candidate distance family."))))
-pseudobulk_params <- c(knn_params, list(
+pseudobulk_params <- c(knn_base_params, list(
   features = list(type = c("array", "null"), default = NULL,
     uniqueItems = TRUE, items = list(type = "string", minLength = 1L)),
   aggregate = list(type = "string", default = "sum", enum = list("sum", "mean")),
@@ -449,7 +463,7 @@ manifest <- list(
   schema_version = "scworkbench.operation_pack.v3", pack_abi_version = "3",
   identity_scheme = "scworkbench.operation_pack.canonical_json.v1",
   namespace = "scwbrepresentation",
-  package = list(name = "scwbRepresentation", version = "0.1.0"),
+  package = list(name = "scwbRepresentation", version = "0.1.1"),
   backend = "R", compatibility = list(
     scworkbench = list(minimum = "0.1.0", maximum_exclusive = "0.2.0"),
     pack_abi = list(minimum = "3", maximum = "3")),

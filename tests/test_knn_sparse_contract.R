@@ -137,6 +137,42 @@ test_representation_knn_overlap_and_bounds_contract <- function() {
   TRUE
 }
 
+test_representation_knn_rann_exact_oracle_contract <- function() {
+  representation_activate_pack()
+  ns <- asNamespace("scwbRepresentation")
+  brute <- get(".repr_knn_brute_force", ns)
+  rann <- get(".repr_knn_rann_exact", ns)
+  candidate <- rbind(c1 = c(0, 0), c2 = c(0, 0), c3 = c(1, 0),
+    c4 = c(-1, 0), c5 = c(2, 2), c6 = c(3, 3))
+  query <- rbind(q1 = c(0, 0), q2 = c(1, 1), q3 = c(2.5, 2.5),
+    q4 = c(-1, 0), q5 = c(10, 10))
+  for (k in c(1L, 2L, 4L, 10L)) for (chunk in c(1L, 2L, 5L)) {
+    expected <- brute(query, candidate, k)
+    observed <- rann(query, candidate, k, chunk)
+    stopifnot(identical(observed, expected),
+      identical(unique(observed$query_cell_id), rownames(query)))
+  }
+  tied <- rann(query["q1", , drop = FALSE], candidate, 2L, 1L)
+  stopifnot(identical(tied$cell_id, c("c1", "c2")),
+    identical(tied$neighbor_rank, 1:2),
+    identical(tied$distance, c(0, 0)))
+  manifest <- jsonlite::read_json(system.file("scworkbench",
+    "operation-pack.json", package = "scwbRepresentation"),
+    simplifyVector = FALSE)
+  operation <- manifest$operations[[match("knn_neighbors", vapply(
+    manifest$operations, `[[`, character(1), "name"))]]
+  dependency <- operation$dependencies[[match("rann_runtime", vapply(
+    operation$dependencies, `[[`, character(1), "requirement_id"))]]
+  stopifnot(identical(operation$params_schema$properties$backend$default,
+      "rann_exact"),
+    identical(operation$params_schema$properties$query_chunk_size$default,
+      1024L),
+    identical(dependency$disposition, "optional"),
+    identical(dependency$selected_when$parameter, "backend"),
+    identical(dependency$selected_when$equals, "rann_exact"))
+  TRUE
+}
+
 test_representation_knn_atomic_agreement_contract <- function() {
   x <- .knn_fixture(); on.exit(.knn_close(x), add = TRUE)
   before <- wb_art_list(x$bundle)
